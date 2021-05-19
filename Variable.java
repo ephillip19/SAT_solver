@@ -8,18 +8,12 @@
  */
 
 public class Variable {
-    int count;
-    int value;
-    int VariableAssign;
-    boolean isUnit;
-    boolean isPure;
+    public int value;
+    public String VariableAssign;
 
-    Variable(int count, int value, int VariableAssign, boolean isUnit, boolean isPure) {
-        this.count = count;
+    Variable(int value, String VariableAssign) {
         this.value = value;
-        this.VariableAssign = VariableAssign; // 0 for neg 1 for pos
-        this.isUnit = isUnit;
-        this.isPure = isPure;
+        this.VariableAssign = VariableAssign;
     }
 
 }

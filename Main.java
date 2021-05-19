@@ -3,17 +3,16 @@ import java.io.FileNotFoundException;
 import java.util.*;
 
 public class Main {
-    public static ArrayList<Integer[]> cnf;
+    public static ArrayList<Variable[]> cnf;
     public static ArrayList<Variable> list_of_variables; // list of variables
-    public static ArrayList<Integer> vars;
-    public static ArrayList<String> vals;
     public static int num_of_variables;
 
     public static int readFile(String file) {
+
         try {
             File myObj = new File("test.cnf");
             Scanner myReader = new Scanner(myObj);
-            cnf = new ArrayList<Integer[]>();
+            cnf = new ArrayList<Variable[]>();
             while (myReader.hasNextLine()) {
                 String data = myReader.nextLine();
                 if (data.charAt(0) == 'c') {
@@ -23,11 +22,11 @@ public class Main {
                     Main.num_of_variables = Integer.parseInt(info[2]);
                 } else if (data.charAt(data.length() - 1) == '0') {
                     String literals_str[] = data.split(" ");
-                    Integer literals[] = new Integer[literals_str.length];
-                    for (int i = 0; i < literals_str.length; i++) {
-                        literals[i] = Integer.parseInt(literals_str[i]);
+                    Variable clause[] = new Variable[literals_str.length - 1];
+                    for (int i = 0; i < literals_str.length - 1; i++) {
+                        clause[i] = new Variable(Integer.parseInt(literals_str[i]), "null");
                     }
-                    cnf.add(literals);
+                    cnf.add(clause);
                 }
             }
             myReader.close();
@@ -35,47 +34,114 @@ public class Main {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
-
-        list_of_variables = new ArrayList<Variable>();
-        for (int i = 1; i < num_of_variables + 1; i++) {
-            list_of_variables.add(new Variable(0, i, 0, false, true));
-        }
-
-        setVars(cnf);
         return 0;
     }
 
-    public static void setVars(ArrayList<Integer[]> cnf) {
-        for (Variable v : list_of_variables) {
-            boolean isNegated = false;
-            boolean isPositive = false;
-            for (Integer[] clause : cnf) {
-                for (int var : clause) {
-                    if (v.value == Math.abs(var) && var < 0) {
-                        isNegated = true;
-                        v.count++;
-                    }
-                    if (v.value == Math.abs(var) && var > 0) {
-                        isPositive = true;
-                        v.count++;
-                    }
+    public static boolean isConsistent() {
+        for (Variable[] clause : cnf) {
+            boolean isSat = false;
+            for (Variable lit : clause) {
+                if ((lit.value > 0 && lit.VariableAssign.equals("true"))
+                        || (lit.value < 0 && lit.VariableAssign.equals("false"))) {
+                    isSat = true;
+                    break;
+                }
+                if (!isSat) {
+                    return false;
+
                 }
             }
-            if (isNegated && isPositive) {
-                v.isPure = false;
+        }
+        return true;
+    }
+
+    public static boolean containsEmpty() {
+        for (Variable[] clause : cnf) {
+            boolean isEmpty = true;
+            for (Variable lit : clause) {
+                if ((lit.value > 0 && lit.VariableAssign.equals("false"))
+                        || (lit.value < 0 && lit.VariableAssign.equals("true"))) {
+                    continue;
+                } else {
+                    isEmpty = false;
+                }
             }
-            if (v.count == 1) {
-                v.isUnit = true;
+            if (isEmpty) {
+                return true;
+            }
+        }
+        return false;
+
+    }
+
+    public static void setVarTrue(Variable literal) {
+        for (Variable[] clause : cnf) {
+            for (Variable lit : clause) {
+                if (lit.value == literal.value) {
+                    lit.VariableAssign = "true";
+                }
+                if (lit.value * -1 == literal.value) {
+                    lit.VariableAssign = "false";
+                }
+            }
+        }
+
+    }
+
+    public static void unitProp(Variable literal) {
+        for (Variable[] clause : cnf) {
+            if (clause.length == 1 && clause[0].value == Math.abs(literal.value)) {
+                setVarTrue(literal);
+                break;
             }
         }
     }
 
-    public static void UnitProp(ArrayList<Integer[]> cnf) {
+    public static void pureLiteral(Variable literal) {
+        boolean isPositive = false;
+        boolean isNegative = false;
+        for (Variable[] clause : cnf) {
+            for (Variable lit : clause) {
+                // check to see if lit is all positive or all negative
+                if (literal.value == lit.value) { // pos case
+                    isPositive = true;
+                }
+                if (literal.value == lit.value * -1) { // neg case
+                    isNegative = true;
+                }
+
+            }
+        }
+        if (!(isPositive && isNegative)) {
+            setVarTrue(literal);
+        }
+    }
+
+    public static boolean DPLL() {
+        if (isConsistent()) {
+            return true;
+        }
+        if (containsEmpty()) {
+            return false;
+        }
+        // unitProp(var);
+        // pureLiteral(var);
+
+        return false; // DPLL(setVarTrue(var))
 
     }
 
     public static void main(String[] args) {
         readFile("test.cnf");
-    }
 
+        // testing
+        // Variable var = new Variable(1, "false");
+        // unitProp(var);
+        // pureLiteral(var);
+        // for (Variable[] clause : cnf) {
+        // for (Variable lit : clause) {
+        // System.out.println(lit.VariableAssign);
+        // }
+        // }
+    }
 }
