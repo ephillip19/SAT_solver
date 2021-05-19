@@ -4,8 +4,8 @@ import java.util.*;
 
 public class Main {
     public static ArrayList<Variable[]> cnf;
-    public static ArrayList<Variable> list_of_variables; // list of variables
     public static int num_of_variables;
+    public static ArrayList<Variable> var_list;
 
     public static int readFile(String file) {
 
@@ -34,6 +34,11 @@ public class Main {
             System.out.println("An error occurred.");
             e.printStackTrace();
         }
+        var_list = new ArrayList<Variable>();
+        for (int i = 0; i < num_of_variables + 1; i++) {
+            var_list.add(new Variable(i, "false"));
+        }
+
         return 0;
     }
 
@@ -41,15 +46,12 @@ public class Main {
         for (Variable[] clause : cnf) {
             boolean isSat = false;
             for (Variable lit : clause) {
-                if ((lit.value > 0 && lit.VariableAssign.equals("true"))
-                        || (lit.value < 0 && lit.VariableAssign.equals("false"))) {
+                if (lit.VariableAssign.equals("true")) {
                     isSat = true;
-                    break;
                 }
-                if (!isSat) {
-                    return false;
-
-                }
+            }
+            if (!isSat) {
+                return false;
             }
         }
         return true;
@@ -59,10 +61,7 @@ public class Main {
         for (Variable[] clause : cnf) {
             boolean isEmpty = true;
             for (Variable lit : clause) {
-                if ((lit.value > 0 && lit.VariableAssign.equals("false"))
-                        || (lit.value < 0 && lit.VariableAssign.equals("true"))) {
-                    continue;
-                } else {
+                if (!(lit.VariableAssign.equals("false"))) {
                     isEmpty = false;
                 }
             }
@@ -70,11 +69,12 @@ public class Main {
                 return true;
             }
         }
+
         return false;
 
     }
 
-    public static void setVarTrue(Variable literal) {
+    public static ArrayList<Variable[]> setVarTrue(Variable literal) {
         for (Variable[] clause : cnf) {
             for (Variable lit : clause) {
                 if (lit.value == literal.value) {
@@ -85,14 +85,32 @@ public class Main {
                 }
             }
         }
+        return cnf;
+
+    }
+
+    public static ArrayList<Variable[]> setVarFalse(Variable literal) {
+        for (Variable[] clause : cnf) {
+            for (Variable lit : clause) {
+                if (lit.value == literal.value) {
+                    lit.VariableAssign = "false";
+                }
+                if (lit.value * -1 == literal.value) {
+                    lit.VariableAssign = "true";
+                }
+            }
+        }
+        return cnf;
 
     }
 
     public static void unitProp(Variable literal) {
         for (Variable[] clause : cnf) {
-            if (clause.length == 1 && clause[0].value == Math.abs(literal.value)) {
+            if (clause.length == 1 && clause[0].value == literal.value) {
                 setVarTrue(literal);
-                break;
+            }
+            if (clause.length == 1 && clause[0].value * -1 == literal.value) {
+                setVarFalse(literal);
             }
         }
     }
@@ -116,23 +134,32 @@ public class Main {
             setVarTrue(literal);
         }
     }
+    // public static Variable chooseVar(){
+    // }
 
-    public static boolean DPLL() {
+    public static boolean DPLL(ArrayList<Variable[]> cnf) {
         if (isConsistent()) {
             return true;
         }
         if (containsEmpty()) {
             return false;
         }
-        // unitProp(var);
-        // pureLiteral(var);
 
-        return false; // DPLL(setVarTrue(var))
+        var_list.remove(0);
+        Variable var = var_list.get(0);
+        unitProp(var);
+        pureLiteral(var);
+        return DPLL(setVarTrue(var)) || DPLL(setVarFalse(var));
 
     }
 
     public static void main(String[] args) {
         readFile("test.cnf");
+        if (DPLL(cnf)) {
+            System.out.println("TRUE");
+        } else {
+            System.out.println("FALSE");
+        }
 
         // testing
         // Variable var = new Variable(1, "false");
