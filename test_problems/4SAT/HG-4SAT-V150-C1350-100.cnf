@@ -1,6 +1,3 @@
-c degrees:  18 
-c girth: 6 max: 4.324941  
-c desired: 1350
 p cnf 150 1350
 -26 21 -48 104 0
 124 109 130 -47 0
