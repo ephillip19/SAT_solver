@@ -8,8 +8,8 @@
  */
 
 public class Variable {
-    public int value;
-    public String VariableAssign;
+    public int value; // -1 or 1 for example
+    public String VariableAssign; // True, False, or Null
 
     Variable(int value, String VariableAssign) {
         this.value = value;
